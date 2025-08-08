@@ -45,7 +45,7 @@
         }
 
         .header {
-            background: var(--card-background);
+            background: linear-gradient(180deg, var(--card-background), var(--background-color));
             padding: 32px 0;
             border-bottom: 1px solid var(--border-color);
             transition: all 0.3s ease;
@@ -228,6 +228,18 @@
             color: var(--primary-color);
         }
 
+        .zero-fee-chip {
+            display: inline-block;
+            margin-left: 8px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--success-color);
+            border: 1px solid var(--success-color);
+            background: rgba(34, 197, 94, 0.08);
+        }
+
         .theme-toggle {
             margin-left: 20px;
         }
@@ -324,6 +336,23 @@
 
         [data-theme="dark"] .best-value {
             background: linear-gradient(to right, rgba(34, 197, 94, 0.2), rgba(34, 197, 94, 0.1));
+        }
+
+        /* Top 2 and Top 3 highlight styles */
+        .second-best {
+            background: linear-gradient(to right, rgba(59, 130, 246, 0.1), rgba(59, 130, 246, 0.05));
+        }
+
+        [data-theme="dark"] .second-best {
+            background: linear-gradient(to right, rgba(59, 130, 246, 0.2), rgba(59, 130, 246, 0.1));
+        }
+
+        .third-best {
+            background: linear-gradient(to right, rgba(245, 158, 11, 0.12), rgba(245, 158, 11, 0.06));
+        }
+
+        [data-theme="dark"] .third-best {
+            background: linear-gradient(to right, rgba(245, 158, 11, 0.22), rgba(245, 158, 11, 0.12));
         }
 
         .tier-indicator {
@@ -438,6 +467,70 @@
             font-weight: 500;
             text-align: center;
         }
+
+        /* Lighter-style section */
+        .why-lighter {
+            background: var(--card-background);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .why-lighter h2 {
+            margin: 0 0 12px 0;
+            color: var(--text-color);
+        }
+
+        .why-subtitle {
+            color: var(--muted-color);
+            margin: 0 0 20px 0;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+        }
+
+        .feature-card {
+            background: var(--card-background);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 16px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0, 0, 0, 0.06);
+        }
+
+        .feature-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: #fff;
+            font-size: 18px;
+            flex: 0 0 36px;
+        }
+
+        .feature-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: var(--text-color);
+        }
+
+        .feature-desc {
+            color: var(--muted-color);
+            font-size: 0.95rem;
+        }
     </style>
 </head>
 <body>
@@ -459,6 +552,40 @@
     </div>
 
     <div class="container">
+        <div class="why-lighter card" style="margin-top: 24px;">
+            <h2>Why trade on Lighter?</h2>
+            <p class="why-subtitle">A modern, efficient, and transparent derivatives venue built for active traders.</p>
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🆓</div>
+                    <div>
+                        <div class="feature-title">Zero trading fees</div>
+                        <div class="feature-desc">0/0 maker–taker on Lighter, so 100% of your PnL stays with you.</div>
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🧮</div>
+                    <div>
+                        <div class="feature-title">Clear pricing</div>
+                        <div class="feature-desc">See fees by venue side‑by‑side and pick the best rate for your size.</div>
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">🛡️</div>
+                    <div>
+                        <div class="feature-title">Risk‑first design</div>
+                        <div class="feature-desc">Robust risk engine and prudent leverage so you can size with confidence.</div>
+                    </div>
+                </div>
+                <div class="feature-card">
+                    <div class="feature-icon">📈</div>
+                    <div>
+                        <div class="feature-title">Trader‑centric tools</div>
+                        <div class="feature-desc">Fast UI, quick tiers overview, and analytics that surface savings instantly.</div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <div class="card">
             <div class="input-group">
                 <label for="volume">30-Day Trading Volume (USD)</label>
@@ -1004,9 +1131,9 @@
             // Add sorted results to table
             feesPer1K.forEach((f, index) => {
                 const row = resultsBody.insertRow();
-                if (index === 0) {
-                    row.classList.add('best-value');
-                }
+                if (index === 0) row.classList.add('best-value');
+                if (index === 1) row.classList.add('second-best');
+                if (index === 2) row.classList.add('third-best');
 
                 const tierClass = getTierClass(f.tier);
                 const isLowestFee = index === 0;
@@ -1023,8 +1150,9 @@
                 }
 
                 row.innerHTML = `
-                    <td class="exchange-name ${isLowestFee ? 'best-value' : ''}">
+                    <td class="exchange-name ${isLowestFee ? 'best-value' : index === 1 ? 'second-best' : index === 2 ? 'third-best' : ''}">
                         ${f.exchange}
+                        ${f.exchange === 'Lighter' ? '<span class="zero-fee-chip">0/0 Fees</span>' : ''}
                         ${isLowestFee ? '<span class="best-badge">Best Rate</span>' : ''}
                     </td>
                     <td>
@@ -1043,7 +1171,7 @@
                     <td class="fee-per-1k">
                         ${formatFees(f.total)} per $1K
                     </td>
-                    <td class="total-fees ${isLowestFee ? 'best-value' : ''}">
+                    <td class="total-fees ${isLowestFee ? 'best-value' : index === 1 ? 'second-best' : index === 2 ? 'third-best' : ''}">
                         ${formatFees(actualFees)}
                     </td>
                 `;
@@ -1078,16 +1206,16 @@
                         {
                             label: 'Maker Fee',
                             data: sortedFees.map(f => f.maker * 100),
-                            backgroundColor: 'rgba(22, 163, 74, 0.6)',
-                            borderColor: 'rgba(22, 163, 74, 1)',
-                            borderWidth: 1
+                            backgroundColor: sortedFees.map(f => f.exchange === 'Lighter' ? 'rgba(34, 197, 94, 0.25)' : 'rgba(22, 163, 74, 0.6)'),
+                            borderColor: sortedFees.map(f => f.exchange === 'Lighter' ? 'rgba(34, 197, 94, 1)' : 'rgba(22, 163, 74, 1)'),
+                            borderWidth: sortedFees.map(f => f.exchange === 'Lighter' ? 3 : 1)
                         },
                         {
                             label: 'Taker Fee',
                             data: sortedFees.map(f => f.taker * 100),
-                            backgroundColor: 'rgba(34, 197, 94, 0.6)',
-                            borderColor: 'rgba(34, 197, 94, 1)',
-                            borderWidth: 1
+                            backgroundColor: sortedFees.map(f => f.exchange === 'Lighter' ? 'rgba(34, 197, 94, 0.25)' : 'rgba(34, 197, 94, 0.6)'),
+                            borderColor: sortedFees.map(f => f.exchange === 'Lighter' ? 'rgba(34, 197, 94, 1)' : 'rgba(34, 197, 94, 1)'),
+                            borderWidth: sortedFees.map(f => f.exchange === 'Lighter' ? 3 : 1)
                         }
                     ]
                 },
@@ -1140,9 +1268,9 @@
                     datasets: [{
                         label: 'Additional Cost',
                         data: savings,
-                        backgroundColor: savings.map(s => s === 0 ? 'rgba(22, 163, 74, 0.6)' : 'rgba(239, 68, 68, 0.6)'),
-                        borderColor: savings.map(s => s === 0 ? 'rgba(22, 163, 74, 1)' : 'rgba(239, 68, 68, 1)'),
-                        borderWidth: 1
+                        backgroundColor: sortedFees.map((f, i) => savings[i] === 0 && f.exchange === 'Lighter' ? 'rgba(34, 197, 94, 0.25)' : (savings[i] === 0 ? 'rgba(22, 163, 74, 0.6)' : 'rgba(239, 68, 68, 0.6)')),
+                        borderColor: sortedFees.map((f, i) => savings[i] === 0 && f.exchange === 'Lighter' ? 'rgba(34, 197, 94, 1)' : (savings[i] === 0 ? 'rgba(22, 163, 74, 1)' : 'rgba(239, 68, 68, 1)')),
+                        borderWidth: sortedFees.map((f, i) => savings[i] === 0 && f.exchange === 'Lighter' ? 3 : 1)
                     }]
                 },
                 options: {
@@ -1198,17 +1326,17 @@
                     datasets: [{
                         label: 'Total Fees',
                         data: totalFees.map(f => f.totalFee),
-                        backgroundColor: totalFees.map(f => 
-                            f.totalFee === Math.min(...totalFees.map(tf => tf.totalFee)) 
-                                ? 'rgba(22, 163, 74, 0.6)' 
-                                : 'rgba(239, 68, 68, 0.6)'
-                        ),
-                        borderColor: totalFees.map(f => 
-                            f.totalFee === Math.min(...totalFees.map(tf => tf.totalFee))
-                                ? 'rgba(22, 163, 74, 1)'
-                                : 'rgba(239, 68, 68, 1)'
-                        ),
-                        borderWidth: 1
+                        backgroundColor: totalFees.map(f => {
+                            const min = Math.min(...totalFees.map(tf => tf.totalFee));
+                            if (f.exchange === 'Lighter') return 'rgba(34, 197, 94, 0.25)';
+                            return f.totalFee === min ? 'rgba(22, 163, 74, 0.6)' : 'rgba(239, 68, 68, 0.6)';
+                        }),
+                        borderColor: totalFees.map(f => {
+                            const min = Math.min(...totalFees.map(tf => tf.totalFee));
+                            if (f.exchange === 'Lighter') return 'rgba(34, 197, 94, 1)';
+                            return f.totalFee === min ? 'rgba(22, 163, 74, 1)' : 'rgba(239, 68, 68, 1)';
+                        }),
+                        borderWidth: totalFees.map(f => f.exchange === 'Lighter' ? 3 : 1)
                     }]
                 },
                 options: {
