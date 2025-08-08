@@ -1407,5 +1407,11 @@
             document.documentElement.setAttribute('data-theme', savedTheme);
         });
     </script>
+    
+    <!-- Vercel Analytics: Works when deployed on Vercel and Analytics is enabled in the project dashboard -->
+    <script>
+        window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html> 
