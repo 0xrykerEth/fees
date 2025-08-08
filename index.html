@@ -1213,8 +1213,8 @@
                         {
                             label: 'Taker Fee',
                             data: sortedFees.map(f => f.taker * 100),
-                            backgroundColor: sortedFees.map(f => f.exchange === 'Lighter' ? 'rgba(34, 197, 94, 0.25)' : 'rgba(34, 197, 94, 0.6)'),
-                            borderColor: sortedFees.map(f => f.exchange === 'Lighter' ? 'rgba(34, 197, 94, 1)' : 'rgba(34, 197, 94, 1)'),
+                            backgroundColor: sortedFees.map(f => f.exchange === 'Lighter' ? 'rgba(139, 92, 246, 0.25)' : 'rgba(139, 92, 246, 0.6)'),
+                            borderColor: sortedFees.map(f => f.exchange === 'Lighter' ? 'rgba(139, 92, 246, 1)' : 'rgba(139, 92, 246, 1)'),
                             borderWidth: sortedFees.map(f => f.exchange === 'Lighter' ? 3 : 1)
                         }
                     ]
@@ -1407,11 +1407,5 @@
             document.documentElement.setAttribute('data-theme', savedTheme);
         });
     </script>
-    
-    <!-- Vercel Analytics: Works when deployed on Vercel and Analytics is enabled in the project dashboard -->
-    <script>
-        window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
-    </script>
-    <script defer src="/_vercel/insights/script.js"></script>
 </body>
 </html> 
