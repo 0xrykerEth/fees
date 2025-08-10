@@ -1713,7 +1713,16 @@
             }
         }
 
-
+        // Helper function to format volume values in billions/millions
+        function formatVolumeValue(value) {
+            const valueInBillions = value / 1e9;
+            if (valueInBillions >= 1) {
+                return `${valueInBillions.toFixed(2)}B`;
+            } else {
+                const valueInMillions = value / 1e6;
+                return `${valueInMillions.toFixed(1)}M`;
+            }
+        }
 
         // Create volume chart (pie chart of top markets by volume)
         function createVolumeChart(markets) {
@@ -1735,7 +1744,8 @@
                 document.getElementById('volumeChartPlaceholder').style.display = 'none';
 
                 const labels = topMarkets.map(market => market.symbol);
-                const data = topMarkets.map(market => parseFloat(market.daily_quote_token_volume) / 1e6); // Convert to millions
+                // Keep original values for proper formatting, don't convert to millions
+                const data = topMarkets.map(market => parseFloat(market.daily_quote_token_volume));
 
                 // Generate colors
                 const colors = [
@@ -1776,7 +1786,8 @@
                                     label: function(context) {
                                         const total = context.dataset.data.reduce((a, b) => a + b, 0);
                                         const percentage = ((context.parsed / total) * 100).toFixed(1);
-                                        return `${context.label}: $${context.parsed.toFixed(1)}M (${percentage}%)`;
+                                        const formattedValue = formatVolumeValue(context.parsed);
+                                        return `${context.label}: $${formattedValue} (${percentage}%)`;
                                     }
                                 }
                             }
