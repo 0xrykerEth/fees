@@ -1,0 +1,1918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TVL Dashboard - Lighter Exchange</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #16a34a;
+            --secondary-color: #22c55e;
+            --background-color: #f8fafc;
+            --card-background: #ffffff;
+            --text-color: #1e293b;
+            --border-color: #e2e8f0;
+            --muted-color: #64748b;
+            --success-color: #22c55e;
+            --error-color: #ef4444;
+        }
+
+        [data-theme="dark"] {
+            --primary-color: #22c55e;
+            --secondary-color: #16a34a;
+            --background-color: #0f172a;
+            --card-background: #1e293b;
+            --text-color: #f8fafc;
+            --border-color: #334155;
+            --muted-color: #94a3b8;
+            --success-color: #22c55e;
+            --error-color: #ef4444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.5;
+            transition: background-color 0.3s ease;
+        }
+
+        .header {
+            background: linear-gradient(180deg, var(--card-background), var(--background-color));
+            padding: 32px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .subtitle {
+            margin-top: 8px;
+            color: var(--muted-color);
+            font-size: 1.1rem;
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: var(--card-background);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--text-color);
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .back-button:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .theme-toggle button {
+            background: none;
+            border: none;
+            padding: 8px;
+            cursor: pointer;
+            font-size: 24px;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-icon {
+            display: none;
+        }
+
+        [data-theme="light"] .theme-icon.light {
+            display: block;
+        }
+
+        [data-theme="dark"] .theme-icon.dark {
+            display: block;
+        }
+
+        .card {
+            background: var(--card-background);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .depositor-card {
+            background: var(--card-background);
+            border-radius: 12px;
+            padding: 40px;
+            margin: 24px 0;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .depositor-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        }
+
+        .depositor-count {
+            font-size: 4rem;
+            font-weight: 700;
+            color: var(--primary-color);
+            margin-bottom: 16px;
+            line-height: 1;
+        }
+
+        .depositor-label {
+            font-size: 1.5rem;
+            color: var(--text-color);
+            margin-bottom: 8px;
+        }
+
+        .depositor-subtitle {
+            color: var(--muted-color);
+            font-size: 1rem;
+        }
+
+        .chart-container {
+            background: var(--card-background);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid var(--border-color);
+            height: 500px;
+            margin: 24px 0;
+        }
+
+        .chart-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-color);
+            text-align: center;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--muted-color);
+        }
+
+        .error {
+            text-align: center;
+            padding: 40px;
+            color: var(--error-color);
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 8px;
+            margin: 20px 0;
+        }
+
+        .refresh-button {
+            background: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 16px;
+        }
+
+        .refresh-button:hover {
+            background: var(--secondary-color);
+            transform: translateY(-1px);
+        }
+
+        .query-info {
+            background: var(--background-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            margin: 16px 0;
+        }
+
+        /* New Beautiful Layout Styles */
+        .analytics-section {
+            margin: 32px 0;
+            background: var(--card-background);
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .analytics-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+        }
+
+        .analytics-section:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .section-header h2 {
+            margin: 0;
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--text-color);
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .metric-with-chart {
+            display: flex;
+            flex-direction: row;
+            gap: 40px;
+            align-items: stretch;
+            min-height: 400px;
+        }
+
+        .metric-display {
+            flex: 0 0 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 16px;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, var(--card-background), var(--background-color));
+            border-radius: 20px;
+            padding: 28px;
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            min-width: 280px;
+            width: 100%;
+            margin: 8px 0;
+        }
+        
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            z-index: 1;
+        }
+        
+        .metric-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(79, 172, 254, 0.03) 0%, rgba(0, 242, 195, 0.03) 100%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .tvl-card::before {
+            background: linear-gradient(90deg, #3b82f6, #60a5fa);
+        }
+
+        .depositors-card::before {
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+        }
+
+        .inflow-card::before {
+            background: linear-gradient(90deg, #10b981, #34d399);
+        }
+
+        .outflow-card::before {
+            background: linear-gradient(90deg, #f59e0b, #fbbf24);
+        }
+
+        .net-flow-card::before {
+            background: linear-gradient(90deg, #10b981, #f59e0b);
+        }
+
+        .metric-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.18);
+        }
+        
+        .metric-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .metric-icon {
+            font-size: 3.5rem;
+            width: 80px;
+            height: 80px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            flex-shrink: 0;
+            box-shadow: 0 4px 16px rgba(34, 197, 94, 0.3);
+        }
+
+        .tvl-card .metric-icon {
+            background: linear-gradient(135deg, #3b82f6, #60a5fa);
+            box-shadow: 0 4px 16px rgba(59, 130, 246, 0.3);
+        }
+
+        .metric-content {
+            flex: 1;
+        }
+
+        .metric-value {
+            font-size: 3rem;
+            font-weight: 800;
+            line-height: 1;
+            margin-bottom: 8px;
+            background: linear-gradient(135deg, var(--text-color), var(--muted-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tvl-card .metric-value {
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .metric-label {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 4px;
+        }
+
+        .metric-subtitle {
+            font-size: 0.95rem;
+            color: var(--muted-color);
+        }
+
+        .chart-display {
+            flex: 1;
+            min-height: 380px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 100%;
+            min-height: 340px;
+            background: var(--card-background);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+            overflow: hidden;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chart-wrapper {
+            width: 100%;
+            height: 320px; /* Fixed height for consistency */
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 195, 0.05) 100%);
+            padding: 16px;
+            box-sizing: border-box;
+        }
+        
+        .chart-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+            max-width: 100% !important;
+            max-height: 100% !important;
+            border-radius: 8px;
+        }
+
+        .chart-container:hover {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-placeholder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100%;
+            color: var(--muted-color);
+            text-align: center;
+            font-size: 1.1rem;
+            background: linear-gradient(135deg, rgba(79, 172, 254, 0.02) 0%, rgba(0, 242, 195, 0.02) 100%);
+            border-radius: 12px;
+            border: 2px dashed var(--border-color);
+            position: relative;
+            gap: 16px;
+        }
+        
+        .chart-placeholder::before {
+            content: '';
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--primary-color);
+            border-radius: 50%;
+            border-top-color: transparent;
+            animation: spin 1s linear infinite;
+            opacity: 0.4;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .refresh-button {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .refresh-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(34, 197, 94, 0.4);
+        }
+
+        .refresh-button:active {
+            transform: translateY(0);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .metric-with-chart {
+                grid-template-columns: 1fr;
+                gap: 28px;
+            }
+            
+            .metric-card {
+                min-width: auto;
+                width: 100%;
+                max-width: 400px;
+            }
+        }
+
+        @media (max-width: 1200px) {
+            .metric-with-chart {
+                flex-direction: column;
+                gap: 24px;
+                min-height: auto;
+            }
+            
+            .metric-display {
+                flex: none;
+                width: 100%;
+            }
+            
+            .chart-display {
+                flex: none;
+                min-height: 320px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .analytics-section {
+                padding: 24px 16px;
+                margin: 24px 0;
+            }
+            
+            .section-header {
+                flex-direction: column;
+                gap: 16px;
+                align-items: stretch;
+            }
+            
+            .metric-card {
+                flex-direction: column;
+                text-align: center;
+                gap: 20px;
+            }
+            
+            .metric-icon {
+                width: 60px;
+                height: 60px;
+                font-size: 2.5rem;
+            }
+            
+            .metric-value {
+                font-size: 2.5rem;
+            }
+            
+            .chart-display {
+                height: 300px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <div class="header-content">
+                <div>
+                    <h1>📈 Lighter Protocol Analytics</h1>
+                    <p class="subtitle">Live TVL and depositor data using Dune Analytics</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <a href="/" class="back-button">
+                        <span>←</span>
+                        Back to Calculator
+                    </a>
+                    <div class="theme-toggle">
+                        <button onclick="toggleTheme()" id="themeButton">
+                            <span class="theme-icon light">☀️</span>
+                            <span class="theme-icon dark">🌙</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- TVL Section -->
+        <div class="analytics-section">
+            <div class="section-header">
+                <h2>💰 Total Value Locked</h2>
+                <button class="refresh-button" onclick="fetchAllData()">🔄 Refresh Data</button>
+            </div>
+            <div class="metric-with-chart">
+                <div class="metric-display">
+                    <div class="metric-card tvl-card">
+                        <div class="metric-icon">💰</div>
+                        <div class="metric-content">
+                            <div class="metric-value" id="tvlCount">--</div>
+                            <div class="metric-label">Total Value Locked</div>
+                            <div class="metric-subtitle">Live TVL in Lighter Protocol</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-display">
+                    <div class="chart-container">
+                        <div class="chart-wrapper">
+                            <canvas id="tvlChart"></canvas>
+                        </div>
+                        <div id="tvlChartPlaceholder" class="chart-placeholder" style="display: none;">
+                            📊 TVL Chart will appear when live data loads
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Depositors Section -->
+        <div class="analytics-section">
+            <div class="section-header">
+                <h2>👥 Total Depositors</h2>
+            </div>
+            <div class="metric-with-chart">
+                <div class="metric-display">
+                    <div class="metric-card depositors-card">
+                        <div class="metric-icon">👥</div>
+                        <div class="metric-content">
+                            <div class="metric-value" id="depositorCount">--</div>
+                            <div class="metric-label">Unique Depositors</div>
+                            <div class="metric-subtitle">Total addresses that deposited</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-display">
+                    <div class="chart-container">
+                        <div class="chart-wrapper">
+                            <canvas id="depositorChart"></canvas>
+                        </div>
+                        <div id="depositorChartPlaceholder" class="chart-placeholder" style="display: none;">
+                            📊 Depositor Chart will appear when live data loads
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- USDC Flow Section -->
+        <div class="analytics-section">
+            <div class="section-header">
+                <h2>💰 USDC Flow</h2>
+            </div>
+            <div class="metric-with-chart">
+                <div class="metric-display">
+                    <div style="display: flex; justify-content: center; width: 100%;">
+                        <div class="metric-card net-flow-card">
+                            <div class="metric-icon">⚖️</div>
+                            <div class="metric-content">
+                                <div class="metric-value" id="netFlowValue">--</div>
+                                <div class="metric-label">24H Net Flow</div>
+                                <div class="metric-subtitle">Net USDC movement</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-display">
+                    <div class="chart-container">
+                        <div class="chart-wrapper">
+                            <canvas id="usdcFlowChart"></canvas>
+                        </div>
+                        <div id="usdcFlowChartPlaceholder" class="chart-placeholder" style="display: none;">
+                            📊 USDC Flow Chart will appear when data loads
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Trading Volume Section -->
+        <div class="analytics-section">
+            <div class="section-header">
+                <h2>📊 Trading Volume</h2>
+            </div>
+            <div class="metric-with-chart">
+                <div class="metric-display">
+                    <div style="display: flex; justify-content: space-between; width: 100%;">
+                        <div class="metric-card">
+                            <div class="metric-icon">💰</div>
+                            <div class="metric-content">
+                                <div class="metric-value" id="dailyVolumeValue">--</div>
+                                <div class="metric-label">24H Volume</div>
+                                <div class="metric-subtitle">Total USD trading volume</div>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon">📈</div>
+                            <div class="metric-content">
+                                <div class="metric-value" id="dailyTradesValue">--</div>
+                                <div class="metric-label">24H Trades</div>
+                                <div class="metric-subtitle">Total number of trades</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-display">
+                    <div class="chart-container">
+                        <div class="chart-wrapper">
+                            <canvas id="volumeChart"></canvas>
+                        </div>
+                        <div id="volumeChartPlaceholder" class="chart-placeholder" style="display: none;">
+                            📊 Volume Chart will appear when data loads
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Market Statistics Section -->
+        <div class="analytics-section">
+            <div class="section-header">
+                <h2>📈 Market Statistics</h2>
+            </div>
+            <div class="metric-with-chart">
+                <div class="metric-display">
+                    <div style="display: flex; justify-content: space-between; width: 100%;">
+                        <div class="metric-card">
+                            <div class="metric-icon">🏪</div>
+                            <div class="metric-content">
+                                <div class="metric-value" id="totalMarketsValue">--</div>
+                                <div class="metric-label">Active Markets</div>
+                                <div class="metric-subtitle">Trading pairs available</div>
+                            </div>
+                        </div>
+                        <div class="metric-card">
+                            <div class="metric-icon">👑</div>
+                            <div class="metric-content">
+                                <div class="metric-value" id="topMarketValue">--</div>
+                                <div class="metric-label">Top Market</div>
+                                <div class="metric-subtitle">Highest volume pair</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="chart-display">
+                    <div class="chart-container">
+                        <div class="chart-wrapper">
+                            <canvas id="marketStatsChart"></canvas>
+                        </div>
+                        <div id="marketStatsChartPlaceholder" class="chart-placeholder" style="display: none;">
+                            📊 Market Statistics Chart will appear when data loads
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- API Status -->
+        <div class="card">
+            <div id="status" class="loading">Checking API configuration...</div>
+            
+            <!-- UTC time info -->
+            <div style="margin-top: 20px; padding: 16px; background: var(--card-background); border-radius: 12px; border: 1px solid var(--border-color); font-size: 14px; color: var(--text-secondary);">
+                <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                    <div>
+                        <strong>🌍 All times shown in UTC</strong>
+                    </div>
+                    <div id="lastRefreshInfo" style="text-align: right;">
+                        Data refreshes every 6 hours
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let depositorChart = null;
+        let tvlChart = null;
+        let usdcFlowChart = null;
+        let volumeChart = null;
+
+        let marketStatsChart = null;
+        
+        // Store USDC flow data globally
+        let usdcFlowData = [];
+        
+        // Helper function to format timestamps in user's local timezone
+        function formatUTCTime(timestamp) {
+            const date = new Date(timestamp);
+            const options = {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                timeZone: 'UTC',
+                timeZoneName: 'short'
+            };
+            return date.toLocaleString('en-US', options);
+        }
+        
+        function formatUTCTimeShort(timestamp) {
+            const date = new Date(timestamp);
+            const options = {
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                timeZone: 'UTC',
+                timeZoneName: 'short'
+            };
+            return date.toLocaleString('en-US', options);
+        }
+
+
+        
+        // Update last refresh info when data is fetched
+        function updateLastRefreshInfo(timestamp) {
+            const lastRefreshEl = document.getElementById('lastRefreshInfo');
+            const fullTime = formatUTCTime(timestamp);
+            lastRefreshEl.innerHTML = `Last updated: <br/><strong>${fullTime}</strong>`;
+        }
+
+        // Check if API is configured and fetch data on load
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            
+            // Initially hide charts and show loading placeholders
+            document.getElementById('depositorChart').style.display = 'none';
+            document.getElementById('depositorChartPlaceholder').style.display = 'block';
+            document.getElementById('tvlChart').style.display = 'none';
+            document.getElementById('tvlChartPlaceholder').style.display = 'block';
+            document.getElementById('usdcFlowChart').style.display = 'none';
+            document.getElementById('usdcFlowChartPlaceholder').style.display = 'block';
+            document.getElementById('volumeChart').style.display = 'none';
+            document.getElementById('volumeChartPlaceholder').style.display = 'block';
+
+            document.getElementById('marketStatsChart').style.display = 'none';
+            document.getElementById('marketStatsChartPlaceholder').style.display = 'block';
+
+            
+            checkApiStatus();
+            fetchAllData();
+        });
+
+        async function checkApiStatus() {
+            try {
+                const response = await fetch('/api/health');
+                const data = await response.json();
+                
+                const statusDiv = document.getElementById('status');
+                if (data.duneApiConfigured) {
+                    statusDiv.innerHTML = '✅ Dune API configured and ready';
+                    statusDiv.className = '';
+                    statusDiv.style.color = 'var(--success-color)';
+                } else {
+                    statusDiv.innerHTML = '⚠️ Dune API key not configured. Set DUNE_API_KEY environment variable.';
+                    statusDiv.className = 'error';
+                }
+            } catch (error) {
+                document.getElementById('status').innerHTML = '❌ Cannot connect to API server';
+                document.getElementById('status').className = 'error';
+            }
+        }
+
+        async function fetchAllData() {
+            // Reset refresh info update flag
+            window.lastRefreshUpdated = false;
+            
+            await Promise.all([
+                fetchTVLData(),
+                fetchDepositorData(),
+                fetchUSDCFlowData(),
+                fetchLighterStats()
+            ]);
+            
+            // Fetch historical data and create charts
+            await Promise.all([
+                fetchTVLHistory(),
+                fetchDepositorsHistory(),
+                fetchUSDCFlowHistory()
+            ]);
+        }
+
+        async function fetchTVLData() {
+            const tvlCountEl = document.getElementById('tvlCount');
+            const statusDiv = document.getElementById('status');
+            
+            try {
+                console.log('Fetching TVL data...');
+                const response = await fetch('/api/tvl?queryId=5253928');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Received TVL data:', data);
+                
+                if (data.success && data.data && data.data.length > 0) {
+                    // Try different possible field names for the TVL amount
+                    const row = data.data[0];
+                    const tvlAmount = row.TVL ||  // The actual field name from query 5253928
+                                    row.total_tvl || 
+                                    row.Total_TVL || 
+                                    row.tvl || 
+                                    row.amount ||
+                                    row.Amount ||
+                                    row['total_value_locked'];
+                    
+                    if (tvlAmount !== undefined && tvlAmount !== null) {
+                        // TVL value is already in millions from the query
+                        const tvlInMillions = Number(tvlAmount);
+                        tvlCountEl.textContent = '$' + tvlInMillions.toFixed(1) + 'M';
+                        
+                        // Show chart canvas and hide placeholder
+                        document.getElementById('tvlChart').style.display = 'block';
+                        document.getElementById('tvlChartPlaceholder').style.display = 'none';
+                        
+                        // Store current TVL for historical chart
+                        window.currentTVL = Number(tvlAmount);
+                        
+                        // Note: Chart will be created by fetchTVLHistory()
+                        
+                        // Update status with UTC time
+                        const updateTime = formatUTCTimeShort(data.timestamp);
+                        statusDiv.innerHTML = `✅ Live data updated (${updateTime})`;
+                        statusDiv.className = '';
+                        statusDiv.style.color = 'var(--success-color)';
+                        
+                        // Update detailed refresh info
+                        updateLastRefreshInfo(data.timestamp);
+                    } else {
+                        throw new Error('TVL amount field not found in response');
+                    }
+                } else {
+                    throw new Error(data.message || 'No TVL data received from Dune API');
+                }
+            } catch (error) {
+                console.error('Error fetching TVL data:', error);
+                tvlCountEl.textContent = '--';
+                
+                // Show placeholder message instead of chart
+                document.getElementById('tvlChart').style.display = 'none';
+                document.getElementById('tvlChartPlaceholder').style.display = 'block';
+                document.getElementById('tvlChartPlaceholder').innerHTML = '❌ No TVL chart available without live data';
+            }
+        }
+
+        async function fetchDepositorData() {
+            const depositorCountEl = document.getElementById('depositorCount');
+            const statusDiv = document.getElementById('status');
+            
+            // Show loading state
+            depositorCountEl.textContent = '...';
+            statusDiv.innerHTML = '🔄 Fetching data from Dune Analytics...';
+            statusDiv.className = 'loading';
+            
+            try {
+                console.log('Fetching depositors data...');
+                const response = await fetch('/api/depositors');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Received data:', data);
+                
+                if (data.success && data.data && data.data.length > 0) {
+                    // Try different possible field names for the depositor count
+                    const row = data.data[0];
+                    const depositorCount = row.Dintinct_Depositors ||  // Note: typo in Dune query field name
+                                         row.distinct_depositors || 
+                                         row.Distinct_Depositors || 
+                                         row.count || 
+                                         row.Count ||
+                                         row['COUNT(DISTINCT(toAddress))'] ||
+                                         row['count(distinct(toaddress))'];
+                    
+                    if (depositorCount !== undefined && depositorCount !== null) {
+                        depositorCountEl.textContent = Number(depositorCount).toLocaleString();
+                        
+                        // Show chart canvas and hide placeholder
+                        document.getElementById('depositorChart').style.display = 'block';
+                        document.getElementById('depositorChartPlaceholder').style.display = 'none';
+                        
+                        // Store current depositor count for historical chart
+                        window.currentDepositors = Number(depositorCount);
+                        
+                        // Note: Chart will be created by fetchDepositorsHistory()
+                        
+                        // Update status with UTC time
+                        const updateTime = formatUTCTimeShort(data.timestamp);
+                        statusDiv.innerHTML = `✅ Live data from Query ID ${data.query_id} (${updateTime})`;
+                        statusDiv.className = '';
+                        statusDiv.style.color = 'var(--success-color)';
+                        
+                        // Update detailed refresh info (if not already updated by TVL)
+                        if (!window.lastRefreshUpdated) {
+                            updateLastRefreshInfo(data.timestamp);
+                            window.lastRefreshUpdated = true;
+                        }
+                    } else {
+                        throw new Error('Depositor count field not found in response');
+                    }
+                } else {
+                    throw new Error(data.message || 'No data received from Dune API');
+                }
+            } catch (error) {
+                console.error('Error fetching depositor data:', error);
+                depositorCountEl.textContent = '--';
+                statusDiv.innerHTML = `❌ Error: ${error.message}<br><small>Configure DUNE_API_KEY in environment variables to get live data</small>`;
+                statusDiv.className = 'error';
+                
+                // Don't show any chart when there's no real data
+                if (depositorChart) {
+                    depositorChart.destroy();
+                    depositorChart = null;
+                }
+                
+                // Show placeholder message instead of chart
+                document.getElementById('depositorChart').style.display = 'none';
+                document.getElementById('depositorChartPlaceholder').style.display = 'block';
+                document.getElementById('depositorChartPlaceholder').innerHTML = '❌ No chart available without live data from Dune API';
+            }
+        }
+
+
+
+
+
+
+        
+
+
+
+
+        async function fetchTVLHistory() {
+            try {
+                console.log('Fetching TVL history...');
+                const response = await fetch('/api/tvl-history');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Received TVL history:', data);
+                
+                if (data.success && data.data && data.data.length > 0) {
+                    console.log('Creating TVL chart with', data.data.length, 'data points');
+                    createTVLChart(data.data);
+                } else {
+                    console.error('Invalid TVL history data:', data);
+                    document.getElementById('tvlChart').style.display = 'none';
+                    document.getElementById('tvlChartPlaceholder').style.display = 'block';
+                    document.getElementById('tvlChartPlaceholder').innerHTML = '❌ No TVL history data available';
+                }
+            } catch (error) {
+                console.error('Error fetching TVL history:', error);
+                document.getElementById('tvlChart').style.display = 'none';
+                document.getElementById('tvlChartPlaceholder').style.display = 'block';
+                document.getElementById('tvlChartPlaceholder').innerHTML = '❌ Failed to load TVL history';
+            }
+        }
+
+        async function fetchDepositorsHistory() {
+            try {
+                console.log('Fetching depositors history...');
+                const response = await fetch('/api/depositors-history');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                console.log('Received depositors history:', data);
+                
+                if (data.success && data.data && data.data.length > 0) {
+                    console.log('Creating depositors chart with', data.data.length, 'data points');
+                    createDepositorChart(data.data);
+                } else {
+                    console.error('Invalid depositors history data:', data);
+                    document.getElementById('depositorChart').style.display = 'none';
+                    document.getElementById('depositorChartPlaceholder').style.display = 'block';
+                    document.getElementById('depositorChartPlaceholder').innerHTML = '❌ No depositors history data available';
+                }
+            } catch (error) {
+                console.error('Error fetching depositors history:', error);
+                document.getElementById('depositorChart').style.display = 'none';
+                document.getElementById('depositorChartPlaceholder').style.display = 'block';
+                document.getElementById('depositorChartPlaceholder').innerHTML = '❌ Failed to load depositors history';
+            }
+        }
+
+        function createDepositorChart(historicalData) {
+            console.log('createDepositorChart called with:', historicalData);
+            
+            const ctx = document.getElementById('depositorChart').getContext('2d');
+            
+            // Destroy existing chart
+            if (depositorChart) {
+                depositorChart.destroy();
+            }
+            
+            // Extract dates and depositor counts from historical data
+            const labels = historicalData.map(item => {
+                const date = new Date(item.date);
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            });
+            const dataPoints = historicalData.map(item => item.depositors);
+            
+            console.log('Depositor chart labels:', labels);
+            console.log('Depositor chart data points:', dataPoints);
+            
+            // Show chart canvas and hide placeholder
+            document.getElementById('depositorChart').style.display = 'block';
+            document.getElementById('depositorChartPlaceholder').style.display = 'none';
+            
+            try {
+                depositorChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total Depositors',
+                        data: dataPoints,
+                        borderColor: 'rgba(34, 197, 94, 1)',
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: 'rgba(34, 197, 94, 1)',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            title: {
+                                display: true,
+                                text: 'Number of Depositors'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return (value / 1000).toFixed(0) + 'K';
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Date (Last 30 Days)'
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                padding: 20,
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'Depositors: ' + context.parsed.y.toLocaleString();
+                                }
+                            }
+                        }
+                    },
+                    elements: {
+                        point: {
+                            hoverBorderWidth: 3
+                        }
+                    }
+                }
+            });
+            console.log('Depositor chart created successfully');
+            } catch (error) {
+                console.error('Error creating depositor chart:', error);
+                document.getElementById('depositorChart').style.display = 'none';
+                document.getElementById('depositorChartPlaceholder').style.display = 'block';
+                document.getElementById('depositorChartPlaceholder').innerHTML = '❌ Error creating depositor chart: ' + error.message;
+            }
+        }
+
+
+
+        function createTVLChart(historicalData) {
+            console.log('createTVLChart called with:', historicalData);
+            
+            const ctx = document.getElementById('tvlChart').getContext('2d');
+            
+            // Destroy existing chart
+            if (tvlChart) {
+                tvlChart.destroy();
+            }
+            
+            // Extract dates and TVL values from historical data
+            const labels = historicalData.map(item => {
+                const date = new Date(item.date);
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            });
+            const dataPoints = historicalData.map(item => item.tvl);
+            
+            console.log('TVL chart labels:', labels);
+            console.log('TVL chart data points:', dataPoints);
+            
+            // Show chart canvas and hide placeholder
+            document.getElementById('tvlChart').style.display = 'block';
+            document.getElementById('tvlChartPlaceholder').style.display = 'none';
+            
+            try {
+                tvlChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Total Value Locked (TVL)',
+                        data: dataPoints,
+                        borderColor: 'rgba(59, 130, 246, 1)', // Blue color for TVL
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: 'rgba(59, 130, 246, 1)',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 5,
+                        pointHoverRadius: 7
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'TVL in Millions USD'
+                            },
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toFixed(1) + 'M';
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Date (Last 30 Days)'
+                            },
+                            grid: {
+                                color: 'rgba(0, 0, 0, 0.1)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                            labels: {
+                                padding: 20,
+                                font: {
+                                    size: 14
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return 'TVL: $' + context.parsed.y.toFixed(1) + 'M';
+                                }
+                            }
+                        }
+                    },
+                    elements: {
+                        point: {
+                            hoverBorderWidth: 3
+                        }
+                    }
+                }
+            });
+            console.log('TVL chart created successfully');
+            } catch (error) {
+                console.error('Error creating TVL chart:', error);
+                document.getElementById('tvlChart').style.display = 'none';
+                document.getElementById('tvlChartPlaceholder').style.display = 'block';
+                document.getElementById('tvlChartPlaceholder').innerHTML = '❌ Error creating TVL chart: ' + error.message;
+            }
+        }
+
+
+
+        async function fetchUSDCFlowData() {
+            const netFlowEl = document.getElementById('netFlowValue');
+            
+            try {
+                console.log('Fetching USDC flow data...');
+                netFlowEl.textContent = 'Loading...';
+                
+                const response = await fetch('/api/usdc-flow?queryId=5253905');
+                console.log('Response status:', response.status, response.statusText);
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error('API Error Response:', errorText);
+                    netFlowEl.textContent = `HTTP ${response.status}`;
+                    return;
+                }
+                
+                const data = await response.json();
+                console.log('Full USDC flow response:', data);
+                
+                // Check response structure
+                if (!data) {
+                    netFlowEl.textContent = 'No Response';
+                    return;
+                }
+                
+                if (!data.success) {
+                    console.error('API returned success=false:', data);
+                    netFlowEl.textContent = 'API Failed';
+                    return;
+                }
+                
+                if (!data.data) {
+                    console.error('No data property in response:', data);
+                    netFlowEl.textContent = 'No Data Property';
+                    return;
+                }
+                
+                if (!Array.isArray(data.data)) {
+                    console.error('Data is not an array:', typeof data.data, data.data);
+                    netFlowEl.textContent = 'Data Not Array';
+                    return;
+                }
+                
+                if (data.data.length === 0) {
+                    console.error('Data array is empty');
+                    netFlowEl.textContent = 'Empty Data';
+                    return;
+                }
+                
+                // Store data globally
+                usdcFlowData = data.data;
+                console.log('Stored USDC flow data:', usdcFlowData.length, 'entries');
+                console.log('Sample data entry:', usdcFlowData[0]);
+                
+                // Display the latest net flow
+                updateNetFlowDisplay();
+                
+                updateLastRefreshInfo(new Date().toISOString());
+                console.log('USDC flow data updated successfully');
+                
+            } catch (error) {
+                console.error('Fetch error details:', error);
+                netFlowEl.textContent = `Error: ${error.message}`;
+            }
+        }
+
+        function updateNetFlowDisplay() {
+            const netFlowEl = document.getElementById('netFlowValue');
+            
+            console.log('updateNetFlowDisplay called with data length:', usdcFlowData ? usdcFlowData.length : 'no data');
+            
+            if (!usdcFlowData || usdcFlowData.length === 0) {
+                console.log('No data available for net flow display');
+                netFlowEl.textContent = 'No Data';
+                return;
+            }
+            
+            try {
+                // Get the most recent entry (latest date)
+                console.log('Sorting data by date...');
+                const sortedData = [...usdcFlowData].sort((a, b) => {
+                    const dateA = new Date(a.date);
+                    const dateB = new Date(b.date);
+                    console.log('Comparing dates:', dateA, 'vs', dateB);
+                    return dateB - dateA;
+                });
+                
+                const latest = sortedData[0];
+                console.log('Latest entry for net flow:', latest);
+                
+                if (!latest) {
+                    console.log('No latest entry found');
+                    netFlowEl.textContent = 'No Latest';
+                    return;
+                }
+                
+                if (latest.amount === undefined || latest.amount === null) {
+                    console.log('Latest entry has no amount:', latest.amount);
+                    netFlowEl.textContent = 'No Amount';
+                    return;
+                }
+                
+                const rawAmount = latest.amount;
+                console.log('Raw amount from latest entry:', rawAmount, typeof rawAmount);
+                
+                const netFlow = parseFloat(rawAmount);
+                if (isNaN(netFlow)) {
+                    console.log('Amount is not a valid number:', rawAmount);
+                    netFlowEl.textContent = 'Invalid Number';
+                    return;
+                }
+                
+                console.log('Parsed net flow value:', netFlow);
+                
+                // Convert to millions and format
+                const millions = netFlow / 1000000;
+                console.log('Net flow in millions:', millions);
+                
+                let formattedValue;
+                if (millions >= 0) {
+                    formattedValue = `+$${millions.toFixed(2)}M`;
+                } else {
+                    formattedValue = `-$${Math.abs(millions).toFixed(2)}M`;
+                }
+                
+                console.log('Final formatted value:', formattedValue);
+                netFlowEl.textContent = formattedValue;
+                
+                // Color code net flow
+                if (netFlow > 0) {
+                    netFlowEl.style.color = '#10b981';
+                } else if (netFlow < 0) {
+                    netFlowEl.style.color = '#f59e0b';
+                } else {
+                    netFlowEl.style.color = 'var(--muted-color)';
+                }
+                
+                console.log('Net flow display updated successfully');
+                
+            } catch (error) {
+                console.error('Error updating net flow display:', error);
+                netFlowEl.textContent = `Display Error: ${error.message}`;
+            }
+        }
+
+        async function fetchUSDCFlowHistory() {
+            try {
+                console.log('Fetching USDC flow history...');
+                
+                // Use the stored data if available, otherwise fetch
+                if (usdcFlowData && usdcFlowData.length > 0) {
+                    console.log('Using stored USDC flow data for chart');
+                    createUSDCFlowChart(usdcFlowData);
+                    return;
+                }
+                
+                const response = await fetch('/api/usdc-flow?queryId=5253905');
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                }
+                
+                const data = await response.json();
+                
+                if (data.success && data.data && data.data.length > 0) {
+                    console.log('Creating USDC flow chart with', data.data.length, 'data points');
+                    usdcFlowData = data.data; // Store for future use
+                    createUSDCFlowChart(data.data);
+                } else {
+                    throw new Error('No valid flow history data received');
+                }
+            } catch (error) {
+                console.error('Error fetching USDC flow history:', error);
+                document.getElementById('usdcFlowChart').style.display = 'none';
+                document.getElementById('usdcFlowChartPlaceholder').style.display = 'block';
+                document.getElementById('usdcFlowChartPlaceholder').innerHTML = '❌ Failed to load USDC flow history';
+            }
+        }
+
+        function createUSDCFlowChart(flowData) {
+            console.log('createUSDCFlowChart called with:', flowData);
+            
+            const ctx = document.getElementById('usdcFlowChart').getContext('2d');
+            
+            // Destroy existing chart
+            if (usdcFlowChart) {
+                usdcFlowChart.destroy();
+            }
+            
+            // Prepare data - only show last 30 days for clarity
+            const recentData = flowData.slice(-30);
+            
+            const labels = recentData.map(item => {
+                const date = new Date(item.date);
+                return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            });
+            
+            // Split net flow into positive (inflow) and negative (outflow) datasets
+            // Convert values to millions for chart display
+            const inflowData = recentData.map(item => {
+                const amount = (item.amount || 0) / 1000000; // Convert to millions
+                return amount > 0 ? amount : 0; // Only show positive flows as inflow
+            });
+            
+            const outflowData = recentData.map(item => {
+                const amount = (item.amount || 0) / 1000000; // Convert to millions
+                return amount < 0 ? amount : 0; // Keep negative flows as negative for chart display
+            });
+            
+            console.log('USDC Flow chart labels:', labels);
+            console.log('Inflow data (millions):', inflowData);
+            console.log('Outflow data (millions):', outflowData);
+            
+            // Show chart canvas and hide placeholder
+            document.getElementById('usdcFlowChart').style.display = 'block';
+            document.getElementById('usdcFlowChartPlaceholder').style.display = 'none';
+            
+            try {
+                usdcFlowChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [
+                            {
+                                label: 'USDC Net Inflow',
+                                data: inflowData,
+                                backgroundColor: 'rgba(16, 185, 129, 0.8)',
+                                borderColor: 'rgba(16, 185, 129, 1)',
+                                borderWidth: 2,
+                                borderRadius: 4,
+                                borderSkipped: false
+                            },
+                            {
+                                label: 'USDC Net Outflow',
+                                data: outflowData, // Already negative, shows below axis
+                                backgroundColor: 'rgba(245, 158, 11, 0.8)',
+                                borderColor: 'rgba(245, 158, 11, 1)',
+                                borderWidth: 2,
+                                borderRadius: 4,
+                                borderSkipped: false
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                            mode: 'index',
+                            intersect: false
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'USDC Net Flow (Millions USD)',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        if (value >= 0) {
+                                            return '+$' + value.toFixed(0) + 'M';
+                                        } else {
+                                            return '-$' + Math.abs(value).toFixed(0) + 'M';
+                                        }
+                                    },
+                                    font: {
+                                        size: 12
+                                    }
+                                },
+                                grid: {
+                                    color: function(context) {
+                                        return context.tick.value === 0 ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0.1)';
+                                    }
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Date (Last 30 Days)',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'top',
+                                labels: {
+                                    padding: 20,
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const value = context.parsed.y;
+                                        if (value >= 0) {
+                                            return `Net Flow: +$${value.toFixed(2)}M`;
+                                        } else {
+                                            return `Net Flow: -$${Math.abs(value).toFixed(2)}M`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                console.log('USDC Flow chart created successfully');
+            } catch (error) {
+                console.error('Error creating USDC flow chart:', error);
+                document.getElementById('usdcFlowChart').style.display = 'none';
+                document.getElementById('usdcFlowChartPlaceholder').style.display = 'block';
+                document.getElementById('usdcFlowChartPlaceholder').innerHTML = '❌ Error creating USDC flow chart: ' + error.message;
+            }
+        }
+
+        // Fetch Lighter exchange statistics
+        async function fetchLighterStats() {
+            try {
+                console.log('🔄 Fetching Lighter exchange statistics...');
+                const response = await fetch('/api/lighter-exchange-stats');
+                
+                if (!response.ok) {
+                    throw new Error(`API Error: ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('📊 Lighter stats retrieved:', data);
+                
+                // Update trading volume display
+                const dailyVolumeEl = document.getElementById('dailyVolumeValue');
+                const dailyTradesEl = document.getElementById('dailyTradesValue');
+                const totalMarketsEl = document.getElementById('totalMarketsValue');
+                const topMarketEl = document.getElementById('topMarketValue');
+                
+                // Format volume in billions/millions
+                const volumeInBillions = data.daily_usd_volume / 1e9;
+                const volumeText = volumeInBillions >= 1 
+                    ? `$${volumeInBillions.toFixed(2)}B`
+                    : `$${(data.daily_usd_volume / 1e6).toFixed(1)}M`;
+                
+                dailyVolumeEl.textContent = volumeText;
+                dailyTradesEl.textContent = data.daily_trades_count.toLocaleString();
+                
+                // Update market statistics
+                totalMarketsEl.textContent = data.total_markets.toString();
+                topMarketEl.textContent = data.top_volume_market ? data.top_volume_market.symbol : '--';
+                
+                // Create volume chart (pie chart showing top markets)
+                createVolumeChart(data.markets);
+                
+                // Create market statistics chart (bar chart)
+                createMarketStatsChart(data.markets);
+                
+            } catch (error) {
+                console.error('❌ Error fetching Lighter stats:', error);
+                document.getElementById('dailyVolumeValue').textContent = 'Error';
+                document.getElementById('dailyTradesValue').textContent = 'Error';
+                document.getElementById('totalMarketsValue').textContent = 'Error';
+                document.getElementById('topMarketValue').textContent = 'Error';
+            }
+        }
+
+
+
+        // Create volume chart (pie chart of top markets by volume)
+        function createVolumeChart(markets) {
+            try {
+                if (!markets || markets.length === 0) {
+                    document.getElementById('volumeChart').style.display = 'none';
+                    document.getElementById('volumeChartPlaceholder').style.display = 'block';
+                    return;
+                }
+
+                // Sort markets by volume and take top 10
+                const topMarkets = markets
+                    .filter(market => market.daily_quote_token_volume > 0)
+                    .sort((a, b) => parseFloat(b.daily_quote_token_volume) - parseFloat(a.daily_quote_token_volume))
+                    .slice(0, 10);
+
+                const ctx = document.getElementById('volumeChart').getContext('2d');
+                document.getElementById('volumeChart').style.display = 'block';
+                document.getElementById('volumeChartPlaceholder').style.display = 'none';
+
+                const labels = topMarkets.map(market => market.symbol);
+                const data = topMarkets.map(market => parseFloat(market.daily_quote_token_volume) / 1e6); // Convert to millions
+
+                // Generate colors
+                const colors = [
+                    '#16a34a', '#22c55e', '#4ade80', '#84cc16', '#eab308',
+                    '#f59e0b', '#f97316', '#ef4444', '#ec4899', '#a855f7'
+                ];
+
+                if (volumeChart) {
+                    volumeChart.destroy();
+                }
+
+                volumeChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: data,
+                            backgroundColor: colors.slice(0, labels.length),
+                            borderColor: colors.slice(0, labels.length),
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 15,
+                                    font: {
+                                        size: 12
+                                    }
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                        const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                        return `${context.label}: $${context.parsed.toFixed(1)}M (${percentage}%)`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                console.log('📊 Volume chart created successfully');
+            } catch (error) {
+                console.error('Error creating volume chart:', error);
+                document.getElementById('volumeChart').style.display = 'none';
+                document.getElementById('volumeChartPlaceholder').style.display = 'block';
+                document.getElementById('volumeChartPlaceholder').innerHTML = '❌ Error creating volume chart';
+            }
+        }
+
+
+
+        // Create market statistics chart (bar chart showing price changes)
+        function createMarketStatsChart(markets) {
+            try {
+                if (!markets || markets.length === 0) {
+                    document.getElementById('marketStatsChart').style.display = 'none';
+                    document.getElementById('marketStatsChartPlaceholder').style.display = 'block';
+                    return;
+                }
+
+                // Sort markets by volume and take top 15, then show their price changes
+                const topMarkets = markets
+                    .filter(market => market.daily_quote_token_volume > 0 && market.daily_price_change !== undefined)
+                    .sort((a, b) => parseFloat(b.daily_quote_token_volume) - parseFloat(a.daily_quote_token_volume))
+                    .slice(0, 15);
+
+                const ctx = document.getElementById('marketStatsChart').getContext('2d');
+                document.getElementById('marketStatsChart').style.display = 'block';
+                document.getElementById('marketStatsChartPlaceholder').style.display = 'none';
+
+                const labels = topMarkets.map(market => market.symbol);
+                const priceChanges = topMarkets.map(market => parseFloat(market.daily_price_change || 0));
+
+                if (marketStatsChart) {
+                    marketStatsChart.destroy();
+                }
+
+                marketStatsChart = new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: '24H Price Change (%)',
+                            data: priceChanges,
+                            backgroundColor: priceChanges.map(change => 
+                                change >= 0 ? 'rgba(34, 197, 94, 0.8)' : 'rgba(239, 68, 68, 0.8)'
+                            ),
+                            borderColor: priceChanges.map(change => 
+                                change >= 0 ? 'rgba(34, 197, 94, 1)' : 'rgba(239, 68, 68, 1)'
+                            ),
+                            borderWidth: 2,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Price Change (%)',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                ticks: {
+                                    callback: function(value) {
+                                        return value.toFixed(1) + '%';
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            },
+                            x: {
+                                title: {
+                                    display: true,
+                                    text: 'Top Markets by Volume',
+                                    font: {
+                                        size: 14,
+                                        weight: 'bold'
+                                    }
+                                },
+                                grid: {
+                                    color: 'rgba(0, 0, 0, 0.1)'
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: false
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const change = context.parsed.y;
+                                        const market = topMarkets[context.dataIndex];
+                                        const volume = (parseFloat(market.daily_quote_token_volume) / 1e6).toFixed(1);
+                                        return [
+                                            `24H Change: ${change >= 0 ? '+' : ''}${change.toFixed(2)}%`,
+                                            `24H Volume: $${volume}M`
+                                        ];
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+
+                console.log('📊 Market Statistics chart created successfully');
+            } catch (error) {
+                console.error('Error creating market statistics chart:', error);
+                document.getElementById('marketStatsChart').style.display = 'none';
+                document.getElementById('marketStatsChartPlaceholder').style.display = 'block';
+                document.getElementById('marketStatsChartPlaceholder').innerHTML = '❌ Error creating market statistics chart';
+            }
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
+
+        // Auto-refresh every 6 hours to avoid excessive API calls
+        setInterval(fetchAllData, 6 * 60 * 60 * 1000);
+    </script>
+</body>
+</html>

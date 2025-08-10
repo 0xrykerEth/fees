@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Account Stats - Lighter Exchange</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #16a34a;
+            --secondary-color: #22c55e;
+            --background-color: #f8fafc;
+            --card-background: #ffffff;
+            --text-color: #1e293b;
+            --border-color: #e2e8f0;
+            --muted-color: #64748b;
+            --success-color: #22c55e;
+            --error-color: #ef4444;
+        }
+
+        [data-theme="dark"] {
+            --primary-color: #22c55e;
+            --secondary-color: #16a34a;
+            --background-color: #0f172a;
+            --card-background: #1e293b;
+            --text-color: #f8fafc;
+            --border-color: #334155;
+            --muted-color: #94a3b8;
+            --success-color: #22c55e;
+            --error-color: #ef4444;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.5;
+            transition: background-color 0.3s ease;
+        }
+
+        .header {
+            background: linear-gradient(180deg, var(--card-background), var(--background-color));
+            padding: 32px 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 2rem;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .subtitle {
+            margin-top: 8px;
+            color: var(--muted-color);
+            font-size: 1.1rem;
+        }
+
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: var(--card-background);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            text-decoration: none;
+            color: var(--text-color);
+            font-weight: 500;
+            transition: all 0.2s ease;
+        }
+
+        .back-button:hover {
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-1px);
+        }
+
+        .theme-toggle button {
+            background: none;
+            border: none;
+            padding: 8px;
+            cursor: pointer;
+            font-size: 24px;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-icon {
+            display: none;
+        }
+
+        [data-theme="light"] .theme-icon.light {
+            display: block;
+        }
+
+        [data-theme="dark"] .theme-icon.dark {
+            display: block;
+        }
+
+        .card {
+            background: var(--card-background);
+            border-radius: 12px;
+            padding: 24px;
+            margin: 24px 0;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .address-input-section {
+            background: var(--card-background);
+            border-radius: 16px;
+            padding: 32px;
+            margin: 32px 0;
+            border: 2px solid var(--border-color);
+            transition: all 0.3s ease;
+        }
+
+        .address-input-section:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 8px 25px rgba(22, 163, 74, 0.1);
+        }
+
+        .input-group {
+            margin-bottom: 24px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--text-color);
+            font-size: 1.1rem;
+        }
+
+        .address-input {
+            width: 100%;
+            padding: 16px 20px;
+            border: 2px solid var(--border-color);
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: 'Courier New', monospace;
+            background: var(--background-color);
+            color: var(--text-color);
+            transition: all 0.2s ease;
+        }
+
+        .address-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.1);
+        }
+
+        .search-button {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .search-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(22, 163, 74, 0.3);
+        }
+
+        .search-button:disabled {
+            background: var(--muted-color);
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .account-dashboard {
+            display: none;
+            margin-top: 32px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: var(--card-background);
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid var(--border-color);
+            text-align: center;
+            transition: all 0.2s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            color: var(--muted-color);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .positions-section {
+            background: var(--card-background);
+            border-radius: 16px;
+            padding: 32px;
+            border: 1px solid var(--border-color);
+            margin-top: 32px;
+        }
+
+        .positions-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .positions-table th,
+        .positions-table td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .positions-table th {
+            background: var(--background-color);
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .positions-table td {
+            color: var(--text-color);
+        }
+
+        .positive {
+            color: var(--success-color);
+        }
+
+        .negative {
+            color: var(--error-color);
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--muted-color);
+        }
+
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--error-color);
+            color: var(--error-color);
+            padding: 16px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .success {
+            background: rgba(34, 197, 94, 0.1);
+            border: 1px solid var(--success-color);
+            color: var(--success-color);
+            padding: 16px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .account-header {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            color: white;
+            padding: 24px;
+            border-radius: 16px;
+            margin-bottom: 24px;
+        }
+
+        .account-header h3 {
+            margin: 0 0 8px 0;
+            font-size: 1.5rem;
+        }
+
+        .account-address {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            opacity: 0.9;
+            word-break: break-all;
+        }
+
+        .charts-section {
+            background: var(--card-background);
+            border-radius: 16px;
+            padding: 32px;
+            border: 1px solid var(--border-color);
+            margin-top: 32px;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 32px;
+            margin-top: 24px;
+        }
+
+        .chart-card {
+            background: var(--background-color);
+            border-radius: 12px;
+            padding: 24px;
+            border: 1px solid var(--border-color);
+        }
+
+        .chart-card h4 {
+            margin: 0 0 20px 0;
+            color: var(--text-color);
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        .chart-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 300px;
+            color: var(--muted-color);
+            font-size: 1rem;
+            text-align: center;
+            background: var(--background-color);
+            border-radius: 8px;
+            border: 2px dashed var(--border-color);
+        }
+
+        .pnl-summary {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .pnl-item {
+            text-align: center;
+            padding: 16px;
+            background: var(--card-background);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .pnl-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .pnl-label {
+            font-size: 0.9rem;
+            color: var(--muted-color);
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="container">
+            <div class="header-content">
+                <div>
+                    <h1>📊 Account Stats</h1>
+                    <p class="subtitle">Track your trading performance with Dune Analytics</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 16px;">
+                    <a href="/" class="back-button">
+                        <span>←</span>
+                        Back to Calculator
+                    </a>
+                    <div class="theme-toggle">
+                        <button onclick="toggleTheme()" id="themeButton">
+                            <span class="theme-icon light">☀️</span>
+                            <span class="theme-icon dark">🌙</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Address Input Section -->
+        <div class="address-input-section">
+            <div class="input-group">
+                <label for="addressInput">🔍 Enter your Ethereum address to view Lighter account stats:</label>
+                <input 
+                    type="text" 
+                    id="addressInput" 
+                    class="address-input" 
+                    placeholder="0x... (42 characters)"
+                    maxlength="42"
+                >
+            </div>
+            <button id="searchButton" class="search-button">
+                <span>📊</span>
+                <span>Get Account Stats</span>
+            </button>
+            <div id="statusMessage"></div>
+        </div>
+
+        <!-- Account Dashboard -->
+        <div id="accountDashboard" class="account-dashboard">
+            <!-- Account Header -->
+            <div id="accountHeader" class="account-header">
+                <h3>🎯 Account Overview</h3>
+                <div id="accountAddress" class="account-address"></div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-icon">💰</div>
+                    <div id="totalAssetValue" class="stat-value">$0.00</div>
+                    <div class="stat-label">Total Asset Value</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🏦</div>
+                    <div id="availableBalance" class="stat-value">$0.00</div>
+                    <div class="stat-label">Available Balance</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">🔒</div>
+                    <div id="collateral" class="stat-value">$0.00</div>
+                    <div class="stat-label">Collateral</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-icon">📈</div>
+                    <div id="totalPnl" class="stat-value">$0.00</div>
+                    <div class="stat-label">Total Unrealized PnL</div>
+                </div>
+            </div>
+
+            <!-- Positions Section -->
+            <div class="positions-section">
+                <h3>📊 Active Positions</h3>
+                <div id="positionsContent">
+                    <div class="loading">Loading positions...</div>
+                </div>
+            </div>
+
+            <!-- Charts Section -->
+            <div class="charts-section">
+                <h3>📈 Performance Analytics</h3>
+                
+                <!-- PnL Summary -->
+                <div class="pnl-summary">
+                    <div class="pnl-item">
+                        <div id="totalRealizedPnL" class="pnl-value">$0.00</div>
+                        <div class="pnl-label">Total Realized PnL</div>
+                    </div>
+                    <div class="pnl-item">
+                        <div id="totalUnrealizedPnL" class="pnl-value">$0.00</div>
+                        <div class="pnl-label">Total Unrealized PnL</div>
+                    </div>
+                    <div class="pnl-item">
+                        <div id="netPnL" class="pnl-value">$0.00</div>
+                        <div class="pnl-label">Net PnL</div>
+                    </div>
+                    <div class="pnl-item">
+                        <div id="activePositionsCount" class="pnl-value">0</div>
+                        <div class="pnl-label">Active Positions</div>
+                    </div>
+                    <div class="pnl-item">
+                        <div id="riskLevel" class="pnl-value">🟢 Low</div>
+                        <div class="pnl-label">Overall Risk</div>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <!-- PnL Breakdown Chart -->
+                    <div class="chart-card">
+                        <h4>💰 PnL Breakdown by Asset</h4>
+                        <div class="chart-container">
+                            <canvas id="pnlChart"></canvas>
+                            <div id="pnlChartPlaceholder" class="chart-placeholder">
+                                📊 PnL chart will appear when you have active positions
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Position Distribution Chart -->
+                    <div class="chart-card">
+                        <h4>🎯 Position Value Distribution</h4>
+                        <div class="chart-container">
+                            <canvas id="positionChart"></canvas>
+                            <div id="positionChartPlaceholder" class="chart-placeholder">
+                                📈 Position distribution will appear when you have active positions
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function toggleTheme() {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        }
+
+        // Validate Ethereum address
+        function isValidEthereumAddress(address) {
+            return /^0x[a-fA-F0-9]{40}$/.test(address);
+        }
+
+        // Format currency values
+        function formatCurrency(value) {
+            const num = parseFloat(value) || 0;
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(num);
+        }
+
+        // Format PnL with color
+        function formatPnL(value) {
+            const num = parseFloat(value) || 0;
+            const formatted = formatCurrency(num);
+            return {
+                value: formatted,
+                isPositive: num >= 0
+            };
+        }
+
+        // Calculate liquidation price for a position
+        function calculateLiquidationPrice(position, availableBalance, collateral) {
+            const positionSize = parseFloat(position.position || 0);
+            const entryPrice = parseFloat(position.avg_entry_price || 0);
+            const positionValue = Math.abs(parseFloat(position.position_value || 0));
+            const marginFraction = parseFloat(position.initial_margin_fraction || 100) / 100; // Convert percentage to decimal
+            const unrealizedPnL = parseFloat(position.unrealized_pnl || 0);
+            
+            if (positionSize === 0 || entryPrice === 0) {
+                return null; // No position or invalid data
+            }
+
+            // Calculate maintenance margin (typically 50% of initial margin)
+            const maintenanceMarginRate = marginFraction * 0.5;
+            
+            // Calculate available margin for this position
+            const totalAvailableMargin = availableBalance + unrealizedPnL;
+            
+            // For LONG positions: Liquidation occurs when price drops
+            // For SHORT positions: Liquidation occurs when price rises
+            
+            let liquidationPrice;
+            
+            if (positionSize > 0) {
+                // LONG position: liquidationPrice = entryPrice - (availableMargin / positionSize)
+                liquidationPrice = entryPrice - (totalAvailableMargin / Math.abs(positionSize));
+            } else {
+                // SHORT position: liquidationPrice = entryPrice + (availableMargin / positionSize)
+                liquidationPrice = entryPrice + (totalAvailableMargin / Math.abs(positionSize));
+            }
+            
+            // Ensure liquidation price is positive
+            return Math.max(0, liquidationPrice);
+        }
+
+        // Calculate liquidation distance percentage
+        function calculateLiquidationDistance(currentPrice, liquidationPrice, isLong) {
+            if (!liquidationPrice || !currentPrice) return null;
+            
+            const distance = isLong 
+                ? ((currentPrice - liquidationPrice) / currentPrice) * 100
+                : ((liquidationPrice - currentPrice) / currentPrice) * 100;
+                
+            return Math.max(0, distance);
+        }
+
+        // Show status message
+        function showStatus(message, isError = false) {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.innerHTML = `<div class="${isError ? 'error' : 'success'}">${message}</div>`;
+            setTimeout(() => {
+                statusEl.innerHTML = '';
+            }, 5000);
+        }
+
+        // Fetch account data from our backend API (proxy to Lighter API)
+        async function fetchAccountData(address) {
+            try {
+                console.log('Fetching account data for:', address);
+                const response = await fetch(`/api/lighter-account/${address}`);
+                
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    
+                    // Handle specific error cases
+                    if (response.status === 404 && errorData.code === 21100) {
+                        throw new Error(errorData.message || 'Account not found - this address has not used Lighter protocol yet.');
+                    }
+                    
+                    throw new Error(errorData.error || `API Error: ${response.status} ${response.statusText}`);
+                }
+
+                const data = await response.json();
+                console.log('Account data received:', data);
+
+                if (data.code !== 200) {
+                    throw new Error(`Lighter API Error: ${data.message || 'Unknown error'}`);
+                }
+
+                if (!data.accounts || data.accounts.length === 0) {
+                    throw new Error('No account found for this address. Make sure you have used Lighter protocol before.');
+                }
+
+                // Return all accounts for aggregation
+                return {
+                    accounts: data.accounts,
+                    total: data.total,
+                    aggregated: aggregateAccountData(data.accounts)
+                };
+            } catch (error) {
+                console.error('Fetch error:', error);
+                throw error;
+            }
+        }
+
+        // Global chart variables
+        let pnlChart = null;
+        let positionChart = null;
+
+        // Aggregate data from multiple sub-accounts
+        function aggregateAccountData(accounts) {
+            console.log(`Aggregating data from ${accounts.length} sub-accounts`);
+            
+            const aggregated = {
+                total_asset_value: 0,
+                available_balance: 0,
+                collateral: 0,
+                positions: new Map(), // Use Map to merge positions by symbol
+                account_count: accounts.length,
+                account_types: accounts.map(acc => ({
+                    index: acc.account_index,
+                    type: acc.account_type === 0 ? 'Cross Margin' : 'Isolated Margin',
+                    total_asset_value: parseFloat(acc.total_asset_value || 0),
+                    available_balance: parseFloat(acc.available_balance || 0),
+                    collateral: parseFloat(acc.collateral || 0)
+                }))
+            };
+
+            accounts.forEach((account, index) => {
+                console.log(`Processing sub-account ${index + 1}:`, {
+                    type: account.account_type === 0 ? 'Cross' : 'Isolated',
+                    asset_value: account.total_asset_value,
+                    balance: account.available_balance,
+                    positions: account.positions?.length || 0
+                });
+
+                // Aggregate financial values
+                aggregated.total_asset_value += parseFloat(account.total_asset_value || 0);
+                aggregated.available_balance += parseFloat(account.available_balance || 0);
+                aggregated.collateral += parseFloat(account.collateral || 0);
+
+                // Aggregate positions by symbol
+                if (account.positions) {
+                    account.positions.forEach(position => {
+                        const symbol = position.symbol;
+                        const existing = aggregated.positions.get(symbol);
+                        
+                        if (existing) {
+                            // Aggregate existing position
+                            existing.position = (parseFloat(existing.position) + parseFloat(position.position || 0)).toString();
+                            existing.position_value = (parseFloat(existing.position_value) + parseFloat(position.position_value || 0)).toString();
+                            existing.unrealized_pnl = (parseFloat(existing.unrealized_pnl) + parseFloat(position.unrealized_pnl || 0)).toString();
+                            existing.realized_pnl = (parseFloat(existing.realized_pnl) + parseFloat(position.realized_pnl || 0)).toString();
+                            
+                            // Calculate weighted average entry price
+                            const totalPosition = parseFloat(existing.position);
+                            if (totalPosition !== 0) {
+                                const existingWeight = parseFloat(existing.avg_entry_price) * (parseFloat(existing.position) - parseFloat(position.position || 0));
+                                const newWeight = parseFloat(position.avg_entry_price || 0) * parseFloat(position.position || 0);
+                                existing.avg_entry_price = ((existingWeight + newWeight) / totalPosition).toString();
+                            }
+                        } else {
+                            // Add new position
+                            aggregated.positions.set(symbol, { ...position });
+                        }
+                    });
+                }
+            });
+
+            // Convert positions Map back to array
+            aggregated.positions = Array.from(aggregated.positions.values());
+            
+            console.log('Aggregated account data:', {
+                total_accounts: aggregated.account_count,
+                total_asset_value: aggregated.total_asset_value,
+                total_positions: aggregated.positions.length,
+                active_positions: aggregated.positions.filter(p => parseFloat(p.position || 0) !== 0).length
+            });
+
+            return aggregated;
+        }
+
+        // Update the dashboard with account data
+        function updateDashboard(responseData, address) {
+            // Show dashboard
+            document.getElementById('accountDashboard').style.display = 'block';
+            
+            // Update account header with sub-account info
+            const headerText = `${address} (${responseData.total} sub-account${responseData.total > 1 ? 's' : ''})`;
+            document.getElementById('accountAddress').textContent = headerText;
+
+            // Use aggregated data
+            const accountData = responseData.aggregated;
+
+            // Update stats with aggregated values
+            document.getElementById('totalAssetValue').textContent = formatCurrency(accountData.total_asset_value || 0);
+            document.getElementById('availableBalance').textContent = formatCurrency(accountData.available_balance || 0);
+            document.getElementById('collateral').textContent = formatCurrency(accountData.collateral || 0);
+
+            // Calculate total unrealized PnL from aggregated positions
+            const totalUnrealizedPnL = accountData.positions
+                ? accountData.positions.reduce((sum, pos) => sum + parseFloat(pos.unrealized_pnl || 0), 0)
+                : 0;
+            
+            const pnlData = formatPnL(totalUnrealizedPnL);
+            const pnlEl = document.getElementById('totalPnl');
+            pnlEl.textContent = pnlData.value;
+            pnlEl.className = `stat-value ${pnlData.isPositive ? 'positive' : 'negative'}`;
+
+            // Update positions with aggregated data
+            updatePositions(accountData.positions || [], responseData.accounts);
+            
+            // Update PnL summary and charts with aggregated data
+            updatePnLSummary(accountData.positions || [], responseData.accounts);
+            updateCharts(accountData.positions || []);
+        }
+
+        // Update PnL summary section
+        function updatePnLSummary(positions, allAccounts = []) {
+            const totalRealized = positions.reduce((sum, pos) => sum + parseFloat(pos.realized_pnl || 0), 0);
+            const totalUnrealized = positions.reduce((sum, pos) => sum + parseFloat(pos.unrealized_pnl || 0), 0);
+            const netPnL = totalRealized + totalUnrealized;
+            const activeCount = positions.filter(pos => 
+                parseFloat(pos.position || 0) !== 0 || parseFloat(pos.unrealized_pnl || 0) !== 0
+            ).length;
+
+            // Calculate overall risk level
+            let overallRisk = 'Low';
+            let overallRiskColor = 'var(--success-color)';
+            let overallRiskIcon = '🟢';
+            
+            if (allAccounts.length > 0) {
+                const totalAvailableBalance = allAccounts.reduce((sum, acc) => sum + parseFloat(acc.available_balance || 0), 0);
+                const totalCollateral = allAccounts.reduce((sum, acc) => sum + parseFloat(acc.collateral || 0), 0);
+                
+                const activePositions = positions.filter(pos => parseFloat(pos.position || 0) !== 0);
+                const riskLevels = activePositions.map(position => {
+                    const positionSize = parseFloat(position.position || 0);
+                    const entryPrice = parseFloat(position.avg_entry_price || 0);
+                    const currentPrice = Math.abs(positionSize) > 0 ? Math.abs(parseFloat(position.position_value || 0)) / Math.abs(positionSize) : entryPrice;
+                    const liquidationPrice = calculateLiquidationPrice(position, totalAvailableBalance, totalCollateral);
+                    const liquidationDistance = calculateLiquidationDistance(currentPrice, liquidationPrice, positionSize > 0);
+                    
+                    if (liquidationDistance === null) return 0;
+                    if (liquidationDistance < 5) return 4; // Critical
+                    if (liquidationDistance < 15) return 3; // High
+                    if (liquidationDistance < 30) return 2; // Medium
+                    return 1; // Low
+                });
+                
+                if (riskLevels.length > 0) {
+                    const maxRisk = Math.max(...riskLevels);
+                    if (maxRisk >= 4) {
+                        overallRisk = 'Critical';
+                        overallRiskColor = 'var(--error-color)';
+                        overallRiskIcon = '🔴';
+                    } else if (maxRisk >= 3) {
+                        overallRisk = 'High';
+                        overallRiskColor = '#ff8c00';
+                        overallRiskIcon = '🟡';
+                    } else if (maxRisk >= 2) {
+                        overallRisk = 'Medium';
+                        overallRiskColor = '#ffa500';
+                        overallRiskIcon = '🟠';
+                    }
+                }
+            }
+
+            // Update PnL summary values
+            const realizedEl = document.getElementById('totalRealizedPnL');
+            const unrealizedEl = document.getElementById('totalUnrealizedPnL');
+            const netEl = document.getElementById('netPnL');
+            const riskEl = document.getElementById('riskLevel');
+            
+            const realizedData = formatPnL(totalRealized);
+            const unrealizedData = formatPnL(totalUnrealized);
+            const netData = formatPnL(netPnL);
+
+            realizedEl.textContent = realizedData.value;
+            realizedEl.className = `pnl-value ${realizedData.isPositive ? 'positive' : 'negative'}`;
+            
+            unrealizedEl.textContent = unrealizedData.value;
+            unrealizedEl.className = `pnl-value ${unrealizedData.isPositive ? 'positive' : 'negative'}`;
+            
+            netEl.textContent = netData.value;
+            netEl.className = `pnl-value ${netData.isPositive ? 'positive' : 'negative'}`;
+            
+            riskEl.textContent = `${overallRiskIcon} ${overallRisk}`;
+            riskEl.style.color = overallRiskColor;
+            
+            document.getElementById('activePositionsCount').textContent = activeCount;
+        }
+
+        // Create PnL breakdown chart
+        function createPnLChart(positions) {
+            const ctx = document.getElementById('pnlChart').getContext('2d');
+            
+            // Filter positions with non-zero PnL
+            const positionsWithPnL = positions.filter(pos => 
+                Math.abs(parseFloat(pos.unrealized_pnl || 0)) > 0.01 || 
+                Math.abs(parseFloat(pos.realized_pnl || 0)) > 0.01
+            );
+
+            if (positionsWithPnL.length === 0) {
+                document.getElementById('pnlChart').style.display = 'none';
+                document.getElementById('pnlChartPlaceholder').style.display = 'flex';
+                return;
+            }
+
+            document.getElementById('pnlChart').style.display = 'block';
+            document.getElementById('pnlChartPlaceholder').style.display = 'none';
+
+            const labels = positionsWithPnL.map(pos => pos.symbol);
+            const unrealizedData = positionsWithPnL.map(pos => parseFloat(pos.unrealized_pnl || 0));
+            const realizedData = positionsWithPnL.map(pos => parseFloat(pos.realized_pnl || 0));
+
+            if (pnlChart) {
+                pnlChart.destroy();
+            }
+
+            pnlChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Unrealized PnL',
+                        data: unrealizedData,
+                        backgroundColor: unrealizedData.map(val => val >= 0 ? 'rgba(34, 197, 94, 0.6)' : 'rgba(239, 68, 68, 0.6)'),
+                        borderColor: unrealizedData.map(val => val >= 0 ? 'rgba(34, 197, 94, 1)' : 'rgba(239, 68, 68, 1)'),
+                        borderWidth: 1
+                    }, {
+                        label: 'Realized PnL',
+                        data: realizedData,
+                        backgroundColor: realizedData.map(val => val >= 0 ? 'rgba(34, 197, 94, 0.3)' : 'rgba(239, 68, 68, 0.3)'),
+                        borderColor: realizedData.map(val => val >= 0 ? 'rgba(34, 197, 94, 0.8)' : 'rgba(239, 68, 68, 0.8)'),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '$' + value.toFixed(2);
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.dataset.label + ': $' + context.parsed.y.toFixed(2);
+                                }
+                            }
+                        },
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Create position distribution chart
+        function createPositionChart(positions) {
+            const ctx = document.getElementById('positionChart').getContext('2d');
+            
+            // Filter positions with actual value
+            const activePositions = positions.filter(pos => 
+                Math.abs(parseFloat(pos.position_value || 0)) > 1
+            );
+
+            if (activePositions.length === 0) {
+                document.getElementById('positionChart').style.display = 'none';
+                document.getElementById('positionChartPlaceholder').style.display = 'flex';
+                return;
+            }
+
+            document.getElementById('positionChart').style.display = 'block';
+            document.getElementById('positionChartPlaceholder').style.display = 'none';
+
+            const labels = activePositions.map(pos => pos.symbol);
+            const values = activePositions.map(pos => Math.abs(parseFloat(pos.position_value || 0)));
+            
+            // Generate colors
+            const colors = [
+                'rgba(34, 197, 94, 0.8)',
+                'rgba(59, 130, 246, 0.8)',
+                'rgba(251, 191, 36, 0.8)',
+                'rgba(239, 68, 68, 0.8)',
+                'rgba(168, 85, 247, 0.8)',
+                'rgba(236, 72, 153, 0.8)',
+                'rgba(14, 165, 233, 0.8)',
+                'rgba(34, 197, 94, 0.6)',
+                'rgba(59, 130, 246, 0.6)',
+                'rgba(251, 191, 36, 0.6)'
+            ];
+
+            if (positionChart) {
+                positionChart.destroy();
+            }
+
+            positionChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: values,
+                        backgroundColor: colors.slice(0, labels.length),
+                        borderColor: colors.slice(0, labels.length).map(color => color.replace('0.8', '1')),
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
+                                    return context.label + ': $' + context.parsed.toFixed(2) + ' (' + percentage + '%)';
+                                }
+                            }
+                        },
+                        legend: {
+                            display: true,
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // Update all charts
+        function updateCharts(positions) {
+            createPnLChart(positions);
+            createPositionChart(positions);
+        }
+
+        // Update positions table
+        function updatePositions(positions, allAccounts = []) {
+            const positionsContent = document.getElementById('positionsContent');
+            
+            let contentHTML = '';
+            
+            // Add sub-accounts summary if multiple accounts
+            if (allAccounts.length > 1) {
+                contentHTML += `
+                    <div style="margin-bottom: 24px; padding: 20px; background: var(--background-color); border-radius: 12px; border: 1px solid var(--border-color);">
+                        <h4 style="margin: 0 0 16px 0; color: var(--text-color);">📋 Sub-Accounts Breakdown</h4>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px;">
+                `;
+                
+                allAccounts.forEach((account, index) => {
+                    const accountType = account.account_type === 0 ? 'Cross Margin' : 'Isolated Margin';
+                    const activePositions = account.positions ? account.positions.filter(p => parseFloat(p.position || 0) !== 0).length : 0;
+                    
+                    contentHTML += `
+                        <div style="padding: 12px; background: var(--card-background); border-radius: 8px; text-align: center; border: 1px solid var(--border-color);">
+                            <div style="font-weight: 600; color: var(--text-color); margin-bottom: 4px;">${accountType}</div>
+                            <div style="font-size: 0.9rem; color: var(--muted-color); margin-bottom: 8px;">Account #${account.account_index}</div>
+                            <div style="font-size: 1.1rem; font-weight: 600; color: var(--primary-color);">${formatCurrency(account.total_asset_value || 0)}</div>
+                            <div style="font-size: 0.8rem; color: var(--muted-color);">${activePositions} active position${activePositions !== 1 ? 's' : ''}</div>
+                        </div>
+                    `;
+                });
+                
+                contentHTML += `
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Filter positions with actual size
+            const activePositions = positions.filter(pos => 
+                parseFloat(pos.position || 0) !== 0 || 
+                parseFloat(pos.unrealized_pnl || 0) !== 0
+            );
+
+            if (activePositions.length === 0) {
+                contentHTML += `
+                    <div style="text-align: center; padding: 40px; color: var(--muted-color);">
+                        📭 No active positions found
+                    </div>
+                `;
+                positionsContent.innerHTML = contentHTML;
+                return;
+            }
+
+            // Add aggregated positions table
+            contentHTML += `
+                <div style="margin-bottom: 16px;">
+                    <h4 style="margin: 0 0 16px 0; color: var(--text-color);">🎯 Aggregated Positions${allAccounts.length > 1 ? ' (Combined from all sub-accounts)' : ''}</h4>
+                </div>
+                <table class="positions-table">
+                    <thead>
+                        <tr>
+                            <th>Symbol</th>
+                            <th>Position</th>
+                            <th>Entry Price</th>
+                            <th>Position Value</th>
+                            <th>Unrealized PnL</th>
+                            <th>Liquidation Price</th>
+                            <th>Risk Level</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+
+            activePositions.forEach(position => {
+                const unrealizedPnL = formatPnL(position.unrealized_pnl);
+                const positionSize = parseFloat(position.position || 0);
+                const entryPrice = parseFloat(position.avg_entry_price || 0);
+                const positionValue = formatCurrency(Math.abs(position.position_value || 0));
+                const isLong = positionSize > 0;
+
+                // Calculate current price from position value and size
+                const currentPrice = Math.abs(positionSize) > 0 ? Math.abs(parseFloat(position.position_value || 0)) / Math.abs(positionSize) : entryPrice;
+                
+                // Get aggregated account data for liquidation calculation
+                let totalAvailableBalance = 0;
+                let totalCollateral = 0;
+                if (allAccounts.length > 0) {
+                    totalAvailableBalance = allAccounts.reduce((sum, acc) => sum + parseFloat(acc.available_balance || 0), 0);
+                    totalCollateral = allAccounts.reduce((sum, acc) => sum + parseFloat(acc.collateral || 0), 0);
+                }
+
+                // Calculate liquidation price
+                const liquidationPrice = calculateLiquidationPrice(position, totalAvailableBalance, totalCollateral);
+                const liquidationDistance = calculateLiquidationDistance(currentPrice, liquidationPrice, isLong);
+                
+                // Determine risk level
+                let riskLevel = 'Low';
+                let riskColor = 'var(--success-color)';
+                let riskIcon = '🟢';
+                
+                if (liquidationDistance !== null) {
+                    if (liquidationDistance < 5) {
+                        riskLevel = 'Critical';
+                        riskColor = 'var(--error-color)';
+                        riskIcon = '🔴';
+                    } else if (liquidationDistance < 15) {
+                        riskLevel = 'High';
+                        riskColor = '#ff8c00';
+                        riskIcon = '🟡';
+                    } else if (liquidationDistance < 30) {
+                        riskLevel = 'Medium';
+                        riskColor = '#ffa500';
+                        riskIcon = '🟠';
+                    }
+                }
+
+                const liquidationPriceText = liquidationPrice ? formatCurrency(liquidationPrice) : 'N/A';
+                const liquidationDistanceText = liquidationDistance ? `${liquidationDistance.toFixed(1)}%` : '';
+
+                contentHTML += `
+                    <tr>
+                        <td><strong>${position.symbol}</strong></td>
+                        <td>${positionSize > 0 ? '🟢 LONG' : positionSize < 0 ? '🔴 SHORT' : '-'} ${Math.abs(positionSize)}</td>
+                        <td>${formatCurrency(entryPrice)}</td>
+                        <td>${positionValue}</td>
+                        <td class="${unrealizedPnL.isPositive ? 'positive' : 'negative'}">${unrealizedPnL.value}</td>
+                        <td style="font-family: 'Courier New', monospace;">${liquidationPriceText}</td>
+                        <td style="color: ${riskColor}; font-weight: 600;">
+                            ${riskIcon} ${riskLevel}
+                            ${liquidationDistanceText ? `<br><span style="font-size: 0.8rem; opacity: 0.8;">${liquidationDistanceText} away</span>` : ''}
+                        </td>
+                    </tr>
+                `;
+            });
+
+            contentHTML += `
+                    </tbody>
+                </table>
+            `;
+
+            positionsContent.innerHTML = contentHTML;
+        }
+
+        // Handle search button click
+        async function handleSearch() {
+            const addressInput = document.getElementById('addressInput');
+            const searchButton = document.getElementById('searchButton');
+            const address = addressInput.value.trim();
+
+            // Validate address
+            if (!address) {
+                showStatus('Please enter an Ethereum address', true);
+                return;
+            }
+
+            if (!isValidEthereumAddress(address)) {
+                showStatus('Please enter a valid Ethereum address (0x... 42 characters)', true);
+                return;
+            }
+
+            // Update button state
+            searchButton.disabled = true;
+            searchButton.innerHTML = '<span>⏳</span><span>Loading...</span>';
+
+            try {
+                const accountData = await fetchAccountData(address);
+                updateDashboard(accountData, address);
+                showStatus('✅ Account data loaded successfully!');
+                
+                // Scroll to dashboard
+                document.getElementById('accountDashboard').scrollIntoView({ 
+                    behavior: 'smooth', 
+                    block: 'start' 
+                });
+            } catch (error) {
+                showStatus(`❌ ${error.message}`, true);
+                document.getElementById('accountDashboard').style.display = 'none';
+            } finally {
+                // Restore button state
+                searchButton.disabled = false;
+                searchButton.innerHTML = '<span>📊</span><span>Get Account Stats</span>';
+            }
+        }
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+
+            // Add event listeners
+            document.getElementById('searchButton').addEventListener('click', handleSearch);
+            
+            // Allow Enter key to search
+            document.getElementById('addressInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    handleSearch();
+                }
+            });
+
+            // Pre-fill with example address for testing
+            // document.getElementById('addressInput').value = '0xb13114bdBd4803526483384cB99B6c0aa48A30f7';
+        });
+    </script>
+</body>
+</html>
